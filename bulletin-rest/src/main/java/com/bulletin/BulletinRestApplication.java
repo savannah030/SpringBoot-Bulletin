@@ -15,6 +15,6 @@ public class BulletinRestApplication {
 
 	@GetMapping
 	public String HelloWorld(){
-		return "Hello Rest";
+		return "first feature branch";
 	}
 }
