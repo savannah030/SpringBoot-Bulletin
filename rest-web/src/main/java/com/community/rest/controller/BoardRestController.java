@@ -54,7 +54,7 @@ public class BoardRestController {
     @PutMapping("/{idx}")
     public ResponseEntity<?> putBoard(@PathVariable("idx")Long idx, @RequestBody Board board) {
         //valid 체크
-        Board persistBoard = boardRepository.getOne(idx) ;
+        Board persistBoard = boardRepository.getById(idx) ;
         persistBoard.update(board);
         boardRepository.save(persistBoard);
         return new ResponseEntity<>("{}", HttpStatus.OK);
