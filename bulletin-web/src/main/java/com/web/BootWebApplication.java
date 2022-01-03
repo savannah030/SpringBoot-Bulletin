@@ -35,9 +35,10 @@ public class BootWebApplication implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public CommandLineRunner runner(UserRepository userRepository, BoardRepository boardRepository) throws Exception{ ///////////
+	public CommandLineRunner runner(UserRepository userRepository, BoardRepository boardRepository) throws Exception{
 		return (args) -> {
 			User user = userRepository.save(User.builder()
+					//.idx(Long.valueOf(1))
 					.name("havi")
 					.password("test")
 					.email("havi@gmail.com")
@@ -46,6 +47,7 @@ public class BootWebApplication implements WebMvcConfigurer {
 
 			IntStream.rangeClosed(1, 200).forEach(index ->
 				boardRepository.save(Board.builder()
+						.idx(Long.valueOf(index))
 						.title("게시글"+index)
 						.subTitle("순서"+index)
 						.content("컨텐츠")

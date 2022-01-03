@@ -11,9 +11,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Created by KimYJ on 2017-07-12.
- */
 @Getter
 @NoArgsConstructor
 @Entity
@@ -48,7 +45,8 @@ public class Board implements Serializable {
     private User user;
 
     @Builder
-    public Board(String title, String subTitle, String content, BoardType boardType, LocalDateTime createdDate, LocalDateTime updatedDate, User user) {
+    public Board(Long idx,String title, String subTitle, String content, BoardType boardType, LocalDateTime createdDate, LocalDateTime updatedDate, User user) {
+        this.idx = idx;
         this.title = title;
         this.subTitle = subTitle;
         this.content = content;
