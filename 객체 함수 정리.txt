@@ -1,0 +1,78 @@
+############ 결국엔 OAuth2 기본 원리를 알아야 저자처럼 구현할 수 있는거임!!!
+####### 저자가 쓴 코드가 다 있어야 하나...? 레포 새로 파서 상향식 프로젝트 만들까?
+
+///////////// 5.4.2 시큐리티+OAuth2 설정하기
+// 저자가 만든 객체
+
+ClientResources(객체)(예제 5-5) : 소셜 미디어 리소스 프로퍼티(application.yml client ??)를 객체로 매핑해줌 -> 예제 5-6) 빈으로 등록(config/SecurityConfig.java)
+
+OAuth2AuthoritiesExtractor(AuthoritiesExtractor 인터페이스 구현): 권한을 리스트 형식으로 생성하여 반환
+(UserTokenService 클래스 안에 구현)
+
+// 저자가 만든 함수
+oauth2ClientFilterRegistration
+
+
+// 기본 객체
+AuthorizationCodeResourceDetails : application.yml에서 client를 기준으로 하위의 키/값을 매핑해주는 대상 객체
+(import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails)
+########### 근데 application.yml의 client는 사용자라기보다는 웹사이트. 웹사이트가 권한 서버(페북,구글,카카오)에 권한 부여 코드 요청하는거임
+### 보통 생각하는 클라이언트는 이 장에서만큼은 리소스 주인이라고 함!!(125p)
+
+ResourceServerProperties : OAuth2 리소스값을 매핑하는 데 사용(원래 용도)&예제에서는 회원 정보를 얻는 userInfoUri 값을 받는데 사용
+(import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties)
+
+WebSecurityConfigurerAdapter (요청,권한,기타 설정에 대해 최적화해줌)
+(BootWebApplication이 상속받은 WebMvcConfigurerAdapter랑 다름!!!)
+(아 근데 그럼  WebMvcConfigurerAdapter도 최적화해주는애일까? 그래서 
+@Override
+addArgumentResolvers 쓰는걸까??
+
+HttpSecurity // 프로토콜 네트워크 주교재 복습!!!
+.authorizeRequests().antMatchers ... .headers() ... formLogin() .. 끝없는 함수들
+
+CompositeFilter
+
+OAuth2RestTemplate : 권한 서버와 통신하기 위해 필요한 객체
+
+UserInfoTokenServices: 소셜 미디어 원격 서버와 통신하여 User 정보를 가져오는 로직이 구현되어있음
+(URI와 clientId 정보가 필요)
+이를 UserTokenService에 상속(커스터마이징)받아 통신에 필요한 값을 넣어주어 설정
+(super()를 사용하여 각각의 소셜 미디어 정보를 주입할 수 있도록 !!)
+
+// 기본 함수
+OAuth2ClientContextFilter : OAuth2 클라이언트용 시큐리티 필터. 올바른 순서로 필터가 동작하도록 설정
+
+
+// 동작 원리 (스프링부트 1.5 기반??)
+1. 인증이 수행될 경로를 넣어 OAuth2 클라이언트용 인증 처리 필터를 생성
+2. 권한 서버와의 통신을 위해 OAuth2RestTemplate을 생성. 
+    이를 생성하기 위해선 client 프로퍼티 정보와 OAuth2ClientContext가 필요(127p 그림 5-2 1번에 해당하는듯?)
+3. User의 권한을 최적화해서 생성하고자 UserInfoTokenServices~~~
+4. 인증이 성공하면 "필터"에 리다이렉트될 URL을 설정
+5. 인증에 실패하면 또 그에 맞는 리다이렉트될 URL을 필터에 설정
+
+
+////////////////////// 5.4.3 어노테이션 기반으로 User 정보 불러오기 
+
+1. OAuth2 인증 성공 시 
+2. UserArgumentResolver(Filter filter)(HandlerMethodArgumentResolver 구현): 인증된 소셜 미디어 회원의 정보를 가져와 User 객체 만들기
+** HandlerMethodArgumentResolver : 컨트롤러 메서드에서 특정 조건에 맞는 파라미터가 있을 때 원하는 값을 바인딩해주는 인터페이스. 스프링 전략 인터페이스. (시큐리티 예제에서 AOP 대신 씀)
+3. supportsParameter 체크
+4. 세션에 User가 있는지(127p 그림 5-2 스프링 시큐리티 OAuth2 적용 흐름도 2번에 해당하는듯?)
+
+
+5.5 스프링부트"2" 기반의 OAuth2 설정
+- 스프링 부트 1.5 -> 스프링 부트 2 업그레이드 되면서 "시큐리티"와 "OAuth2 인증" 부분에 여러 변화가 생김
+	1. OAuth2 설정이 세분화(build.gradle에서 oauth2-client, oauth2-jose 이런식으로 나뉨)
+	2. 2.0 버전에서 제거된 객체를 삭제해야함
+	3. 구글과 페이스북은 범용적인 소셜 그룹이라 시큐리티에서 제공하지만, 카카오 같은 국내기업 소셜은 어떻게 처리?
+	    -> OAuth2 로그인 정보를 빌더로 생성하여 제공
+	4. @EnableOAuth2Client 필요없음 (그에 따른 filter ClientResources 다 없애줌)
+	** 단지 시큐리티 설정에서 oauth2Login()만 추가로 설정하면 
+	    기본적으로 제공되는 구글과 페이스북에 대한 OAuth2 인증 방식이 적용,
+	    카카오는 커스터마이징
+
+- JOSE(Javascript Object Signing and Encryption)는 JWT의 암호화/복호화 및 일정한 기능을 제공
+
+
